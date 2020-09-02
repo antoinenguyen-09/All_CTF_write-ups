@@ -7,6 +7,7 @@
  - Local file inclusion.
  - SQL injection.
  - HTTP cookie.
+ - PHP Object injection.
 ### Giải quyết vấn đề:
 Okay, trước tiên chúng ta hãy test thử trang login này nào.
 ![enter image description here](https://res.cloudinary.com/practicaldev/image/fetch/s--ge4uP4DX--/c_limit,f_auto,fl_progressive,q_auto,w_880/https://thepracticaldev.s3.amazonaws.com/i/q1glk24z4czgq8pl6nqr.png)
