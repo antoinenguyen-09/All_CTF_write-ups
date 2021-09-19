@@ -14,6 +14,7 @@ Như mọi dạng bài cho source code từ trước, việc đầu tiên chúng
 
 Bài này nhìn chung là khá dễ, nếu thậm chí nếu bạn đọc code và suy nghĩ theo cách đơn giản thì sẽ ra flag cực kì nhanh. Nhưng tôi và thằng teammate [baolongv3](https://github.com/baolongv3) đã chọn cách khó hơn, đó là ăn hết tất cả cú lừa của bài này:
 
-a. Author để lộ tất cả các file trong private folder **db**:
+a) Author để lộ tất cả các file trong private folder **db**:
+- Không biết
 
 
