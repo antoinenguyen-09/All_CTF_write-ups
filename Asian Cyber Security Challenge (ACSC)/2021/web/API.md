@@ -27,9 +27,11 @@ Bài này nhìn chung là khá dễ, nếu thậm chí nếu bạn đọc code v
 
 a) Author để lộ tất cả các file trong private folder **db**:
 - Không biết là vô tình hay cố ý mà tác giả lại để lộ 2 cái file "mới nhìn tưởng là quan trọng và là chìa khóa để tìm ra flag" này:
-\+ user.db: phần 
+\+ user.db: file chứa toàn bộ thông tin account của tất cả các user trên web app này, mỗi field thông tin khác nhau được ngăn cách bởi dấu **|** (theo tôi dự đoán thì nó theo format sau: **username|hash của password|user level (admin sẽ được gán bằng 1, normal user được gán bằng 0)**). Khi refresh trang thì ta thấy file được append thêm một số account mới. Tất cả các account này đều có user level bằng 0. Chỉ duy nhất account có username tên **Pang** (trong hình) có user level bằng 1. 
 
 ![image](https://user-images.githubusercontent.com/61876488/133935426-9b75a34d-b2da-462d-8c76-261ecc974c5d.png)
+
+File user.db được 
 
 \+ passcode.db: phần
 
