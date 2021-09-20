@@ -6,7 +6,7 @@
 - Broken Access Control.
 ### Giải quyết vấn đề:
 
-1/ Chuẩn bị:
+1/ Thăm dò:
 
 Như mọi dạng bài cho source code từ trước, việc đầu tiên chúng ta cần làm là tôn trọng tác giả, mở source code ra đọc và deploy nó lên. Vào trong root folder **public** rồi deploy trên locahost bằng lệnh `php -S localhost:<any port number>`. Tạm thời chưa quan tâm đến các file config như 000-default.conf, docker-compose.yml hay Dockerfile, chúng ta sẽ sử dụng sau. Nhìn sơ qua thì chúng ta có một cái web app chỉ có 3 chức năng thế này:
 - Sign in:
@@ -21,13 +21,16 @@ Như mọi dạng bài cho source code từ trước, việc đầu tiên chúng
 
 ![image](https://user-images.githubusercontent.com/61876488/133935020-edde6565-282c-41b6-b0c4-0e6d804ce934.png)
 
-2/ Những cú lừa có thể sẽ gặp:
+Thử tạo một account tại **signup.html** rồi đăng nhập vào thử:
 
-Bài này nhìn chung là khá dễ, nếu thậm chí nếu bạn đọc code và suy nghĩ theo cách đơn giản thì sẽ ra flag cực kì nhanh. Nhưng tôi và thằng teammate [baolongv3](https://github.com/baolongv3) đã chọn cách khó hơn, đó là ăn hết tất cả cú lừa của bài này:
+![image](https://user-images.githubusercontent.com/61876488/133984382-77054168-a985-4fe1-bb9f-ea2ba0d2e210.png)
 
-a) Tác giả để lộ tất cả các file trong private folder **db**:
 
-\+ Không biết là vô tình hay cố ý mà tác giả lại để lộ 2 cái file "mới nhìn tưởng là quan trọng và là chìa khóa để tìm ra flag" này:
+2/ Nghiên cứu source code:
+
+Bài này nhìn chung là khá dễ, nếu thậm chí nếu bạn đọc code và suy nghĩ theo cách đơn giản thì sẽ ra flag cực kì nhanh. Nhưng tôi và thằng teammate [baolongv3](https://github.com/baolongv3) đã chọn cách khó hơn, đó là ăn hết tất cả cú lừa của bài này.
+
+Cú lừa đầu tiên, không biết là vô tình hay cố ý mà tác giả lại để lộ 2 cái file "mới nhìn tưởng là quan trọng và là chìa khóa để tìm ra flag" này:
 
 - user.db: file chứa toàn bộ thông tin account của tất cả các user trên web app này, mỗi field thông tin khác nhau được ngăn cách bởi dấu **|** (theo tôi dự đoán thì nó theo format sau: **username|hash của password|user level (admin sẽ được gán bằng 1, normal user được gán bằng 0)**). Khi refresh trang thì ta thấy file được append thêm một số account mới. Tất cả các account này đều có user level bằng 0. Chỉ duy nhất account có username tên **Pang** (trong hình) có user level bằng 1. 
 
@@ -87,7 +90,7 @@ if (file_exists($path)) return false;
 
 => Xem xong file này tôi có 2 thắc mắc:
   
-  \- Hai hàm **gen_user_db** và **gen_pass_db** đều hoạt động giống y hệt nhau, tại sao refresh trang user.db thì thấy các account mới được append vào còn passcode.db thì vẫn giữ nguyên như vậy. Chứng tỏ có một hàm nào đó khác nữa đã làm công việc append này, và nó chính là hàm **signup** (check [file](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/Asian%20Cyber%20Security%20Challenge%20(ACSC)/2021/web/source/public/lib/User.class.php)):
+  \- Hai hàm **gen_user_db** và **gen_pass_db** đều hoạt động giống y hệt nhau, tại sao refresh trang user.db thì thấy các account mới được append vào còn passcode.db thì vẫn giữ nguyên như vậy? Chứng tỏ có một hàm nào đó khác nữa đã làm công việc append này, và nó chính là hàm **signup** (check [file](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/Asian%20Cyber%20Security%20Challenge%20(ACSC)/2021/web/source/public/lib/User.class.php)):
 
 ```php
 public function signup(){
@@ -101,5 +104,25 @@ public function signup(){
 	return true;
 }
 ```
+  
+  \- Nếu ":<vNk" trong file **passcode.db** không phải là salt của hàm hash ripedm160, vậy nó được tạo ra để làm gì? Nhìn vào hàm **is_pass_correct** trong file [Admin.class.php](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/Asian%20Cyber%20Security%20Challenge%20(ACSC)/2021/web/source/public/lib/Admin.class.php), ta thấy $passcode lấy data từ file **passcode.db** thông qua hàm **get_pass**, $input lấy data từ value của parameter **pas** được lưu trên superglobal [REQUEST](https://www.w3schools.com/php/php_superglobals_request.asp), sau đó nếu 2 biến này bằng nhau thì `return true`:
+  
+```php
+public function is_pass_correct(){
+	$passcode = $this->get_pass();  // $passcode == ':<vNk'
+	$input = $_REQUEST['pas'];
+	if ($input == $passcode) return true;
+}
+```
+  
+3/ Khai thác:
 
+- Nói thêm một chút về các parameter nằm trong superglobal **REQUEST** của bài này, tất cả đều được gửi từ form **signin** thông qua hàm signin nằm trong file [client.js](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/Asian%20Cyber%20Security%20Challenge%20(ACSC)/2021/web/source/public/static/js/client.js). Nếu theo luồng hoạt động của hàm này thì chỉ có 3 parameter được gửi vào **REQUEST** là **id**, **pw** và **c** (1). Như vậy, để hàm **is_pass_correct** có thể `return true`, ta phải tự chèn thêm parameter `pas=:<vNk` vào sau khi sign in (2).
+- Như đã thấy ở phần **thăm dò**, dù có tạo được account thì chúng ta cũng không thể vào được bên trong, web app chỉ alert rằng "Only admin can access the page". 
+  
+  
+
+
+
+  
 
