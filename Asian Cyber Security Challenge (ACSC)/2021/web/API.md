@@ -25,16 +25,81 @@ Như mọi dạng bài cho source code từ trước, việc đầu tiên chúng
 
 Bài này nhìn chung là khá dễ, nếu thậm chí nếu bạn đọc code và suy nghĩ theo cách đơn giản thì sẽ ra flag cực kì nhanh. Nhưng tôi và thằng teammate [baolongv3](https://github.com/baolongv3) đã chọn cách khó hơn, đó là ăn hết tất cả cú lừa của bài này:
 
-a) Author để lộ tất cả các file trong private folder **db**:
-- Không biết là vô tình hay cố ý mà tác giả lại để lộ 2 cái file "mới nhìn tưởng là quan trọng và là chìa khóa để tìm ra flag" này:
-\+ user.db: file chứa toàn bộ thông tin account của tất cả các user trên web app này, mỗi field thông tin khác nhau được ngăn cách bởi dấu **|** (theo tôi dự đoán thì nó theo format sau: **username|hash của password|user level (admin sẽ được gán bằng 1, normal user được gán bằng 0)**). Khi refresh trang thì ta thấy file được append thêm một số account mới. Tất cả các account này đều có user level bằng 0. Chỉ duy nhất account có username tên **Pang** (trong hình) có user level bằng 1. 
+a) Tác giả để lộ tất cả các file trong private folder **db**:
+
+\+ Không biết là vô tình hay cố ý mà tác giả lại để lộ 2 cái file "mới nhìn tưởng là quan trọng và là chìa khóa để tìm ra flag" này:
+
+- user.db: file chứa toàn bộ thông tin account của tất cả các user trên web app này, mỗi field thông tin khác nhau được ngăn cách bởi dấu **|** (theo tôi dự đoán thì nó theo format sau: **username|hash của password|user level (admin sẽ được gán bằng 1, normal user được gán bằng 0)**). Khi refresh trang thì ta thấy file được append thêm một số account mới. Tất cả các account này đều có user level bằng 0. Chỉ duy nhất account có username tên **Pang** (trong hình) có user level bằng 1. 
 
 ![image](https://user-images.githubusercontent.com/61876488/133935426-9b75a34d-b2da-462d-8c76-261ecc974c5d.png)
 
-File user.db được 
+Nhìn vào hàm main, ta thấy file user.db vốn không có sẵn trong folder db. Nó được khởi tạo bằng cách gọi hàm **gen_user_db**:
 
-\+ passcode.db: phần
+```php
+function gen_user_db($acc){
+	$path = dirname(__FILE__).DIRECTORY_SEPARATOR;
+	$path .= "db".DIRECTORY_SEPARATOR;
+	$path .= "user.db";
+	if (file_exists($path)) return false;
+	else {
+		global $admin;
+		$u = new User($acc);
+		$fmt = sprintf("%s|%s|%d,", $admin['id'], $u->gen_hash($admin['pw']), $admin['level']);
+		file_put_contents($path, $fmt);
+	}
+}
+``` 
+Nếu file user.db chưa được tạo, nó sẽ được tạo mới bởi hàm [file_put_contents](https://www.w3schools.com/php/func_filesystem_file_put_contents.asp), đồng thời hàm này sẽ ghi vào file user.db mới được tạo account của admin thông qua biến $fmt, biến này lại lấy các field **id**, **pw** và **level** từ global array $admin được gọi từ file **config.php**:
+
+```php
+<?php
+$admin = ['id' => "*secret*", 'pw' => "*secret*", 'level' => 1];
+?>
+```
+Vậy là đúng như dự đoán, admin được gán level bằng 1, như vậy account có id là "Pang" chắc chắn là admin, và ta cần lấy được password của user này bằng cách dehash cái này: `c307cae832059f15e52cc5e6a26a2eb3ae7173e6`. Password được hash bằng hàm ripemd160:
+
+```php
+public function gen_hash($val){
+	return hash("ripemd160", $val);
+}
+```
+
+Nhưng có vẻ đây là một challenge dùng não 100%, đừng phí thời gian chạy hashcat hàng tiếng đồng hồ để tìm password như tôi nhé, nó không ra cái gì đâu @@
+
+- passcode.db: chứa một string có độ dài 5 kí tự, nếu chỉ nhìn mà không đọc code kĩ thì sẽ rất dễ nhầm đây là salt mà tác giả ném vào hàm hash ripemd160 để băm password của các user. Nếu deploy đoạn code này (lấy từ hàm **gen_pass_db**) thì bạn sẽ đấy string này random từ biến $rand_str sau mỗi lần refresh trang:
+
+```php
+$rand_str = "`~1234567890-=!@#$%^&*()_+qwertyuiopT[]\\";
+$rand_str .= "asdfghjkl;':\"zxcvbnm./<>?QWERASDFZCVBNM";
+$res = '';
+for($i = 0; $i < $len; $i++){
+	$res .= $rand_str[rand(0, strlen($rand_str)) - 1];
+}
+echo $res;
+```
+Nhưng trên [url](https://api.chal.acsc.asia/lib/db/passcode.db) thì dù refresh lại bao nhiêu lần nó cũng ra ":<vNk". Lí do là vì file **passcode.db** cũng hoạt động giống file **user.db**, nếu file đã được tạo rồi thì hàm sẽ kết thúc và không đụng gì file nữa:
+
+```php
+if (file_exists($path)) return false;
+```
 
 ![image](https://user-images.githubusercontent.com/61876488/133935507-09c1781e-b1c1-45be-b0db-fabec655923b.png)
+
+=> Xem xong file này tôi có 2 thắc mắc:
+  
+  \- Hai hàm **gen_user_db** và **gen_pass_db** đều hoạt động giống y hệt nhau, tại sao refresh trang user.db thì thấy các account mới được append vào còn passcode.db thì vẫn giữ nguyên như vậy. Chứng tỏ có một hàm nào đó khác nữa đã làm công việc append này, và nó chính là hàm **signup** (check [file](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/Asian%20Cyber%20Security%20Challenge%20(ACSC)/2021/web/source/public/lib/User.class.php)):
+
+```php
+public function signup(){
+	if (!preg_match("/^[A-Z][0-9a-z]{3,15}$/", $this->acc[0])) return false;
+	if (!preg_match("/^[A-Z][0-9A-Za-z]{8,15}$/", $this->acc[1])) return false;
+	$data = $this->load_db();
+	for($i = 0; $i < count($data); $i++){
+		if ($data[$i][0] == $this->acc[0]) return false;
+	}
+	file_put_contents($this->db['path'], $this->db['fmt'], FILE_APPEND);  // $this->db['path'] == 'public/lib/db/user.db' và $this->db['fmt'] = sprintf("%s|%s|%d,", $this->acc[0], $this->gen_hash($this->acc[1]), 0) 
+	return true;
+}
+```
 
 
