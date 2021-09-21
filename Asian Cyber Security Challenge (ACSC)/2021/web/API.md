@@ -118,8 +118,16 @@ public function is_pass_correct(){
 3/ Khai thác:
 
 - Nói thêm một chút về các parameter nằm trong superglobal **REQUEST** của bài này, tất cả đều được gửi từ form **signin** thông qua hàm signin nằm trong file [client.js](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/Asian%20Cyber%20Security%20Challenge%20(ACSC)/2021/web/source/public/static/js/client.js). Nếu theo luồng hoạt động của hàm này thì chỉ có 3 parameter được gửi vào **REQUEST** là **id**, **pw** và **c** (1). Như vậy, để hàm **is_pass_correct** có thể `return true`, ta phải tự chèn thêm parameter `pas=:<vNk` vào sau khi sign in (2).
-- Như đã thấy ở phần **thăm dò**, dù có tạo được account thì chúng ta cũng không thể vào được bên trong, web app chỉ alert rằng "Only admin can access the page". 
+- Như đã thấy ở phần **thăm dò**, dù có tạo được account thì chúng ta cũng không thể vào được bên trong, web app chỉ alert rằng "Only admin can access the page". Bắt thử một request rồi send qua repeater của Burp Suite thì ta được:
+
+![image](https://user-images.githubusercontent.com/61876488/134211842-5dc017ee-08fe-4c6f-8a62-05180c5c84c1.png)
+
+- Response cho biết rằng trang web đang bị chuyển hướng đến **/api.php?#access denied** do đoạn code javascript `location.href = '/api.php?#access denied';`. Vậy đoạn code javascript này từ đâu ra. Check lại hàm **main** rồi mò lại hàm **challenge**, ta có:
   
+```php
+if (!$admin->is_admin()) $admin->redirect('/api.php?#access denied');
+```
+- Nếu o
   
 
 
