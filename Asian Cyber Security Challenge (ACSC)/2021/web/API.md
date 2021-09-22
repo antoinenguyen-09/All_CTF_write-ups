@@ -145,7 +145,31 @@ if ($cmd) {
 	}
 }
 ```
-- Đọc lướt qua thì ta sẽ thấy đây là một đoạn code authorize rất bình thường, khi account không phải admin thì sẽ trả về response như đã thấy trên Burp Suite. Nhưng nhìn kĩ lại một chút thì chúng ta phát hiện một sai lầm cực kì tai hại của người viết đoạn code này, đó chính là dùng `if (!$admin->is_admin())` cho câu lệnh `$admin->redirect('/api.php?#access denied');` nhưng lại quên đặt các khối lệnh phía sau vào `else`. Điều này đồng nghĩa rằng kể cả account của bạn không phải là admin, đăng nhập vào bị alert ra lỗi, nhưng vẫn có thể thực thi toàn bộ các lệnh ở phía sau `if`. Vấn đề bây giờ chỉ là chọn value nào để inject vào parameter **c2** trong số 
+- Đọc lướt qua thì ta sẽ thấy đây là một đoạn code authorize rất bình thường, khi account không phải admin thì sẽ trả về response như đã thấy trên Burp Suite. Nhưng nhìn kĩ lại một chút thì chúng ta phát hiện một sai lầm cực kì tai hại của người viết đoạn code này, đó chính là dùng `if (!$admin->is_admin())` cho câu lệnh `$admin->redirect('/api.php?#access denied');` nhưng lại quên đặt các khối lệnh phía sau vào `else`. Điều này đồng nghĩa rằng kể cả account của bạn không phải là admin, đăng nhập vào bị alert ra lỗi, nhưng vẫn có thể thực thi toàn bộ các lệnh ở phía sau `if`. Vấn đề bây giờ chỉ là chọn value nào để inject vào parameter **c2** trong các value **gu**, **gd**, **gp** và **cf**. Nếu chọn **gd** thì ta sẽ gọi được hàm **export_db**, hàm này lại lấy data từ paramter **db**. Cùng xem hàm này hoạt động như thế nào:
+
+```php
+public function export_db($file){
+	if ($this->is_pass_correct()) {
+		$path = dirname(__FILE__).DIRECTORY_SEPARATOR;
+		$path .= "db".DIRECTORY_SEPARATOR;
+		$path .= $file;
+		$data = file_get_contents($path);
+		$data = explode(',', $data);
+		$arr = [];
+		for($i = 0; $i < count($data); $i++){
+			$arr[] = explode('|', $data[$i]);
+		}
+		return $arr;
+	}else 
+		return "The passcode does not equal with your input.";
+}
+```
+- Để hàm này có thể chạy được ta cần phải chèn vào request `pas=:<vNk` như đã giải thích ở cuối phần **Nghiên cứu source code**. Trong luồng hoạt động của hàm này chúng ta chỉ cần để ý duy nhất lệnh `$data = file_get_contents($path);` là có thể kết luận sử dụng hàm này ta có thể đọc được nội dung của một file bất kì trong hệ thống, trong đó có file flag. Sau khi mò được đường dẫn của flag thì ta đã có flag trong tay:
+
+![image](https://user-images.githubusercontent.com/61876488/134284518-70f8fbe9-6706-404b-8784-667bdbd5e90e.png)
+
+- Payload: id=Baictfkhoqua&pw=Aa1234567&c=i&pas=:<vNk&c2=gd&db=../../../../../../../flag
+- Flag: `ACSC{it_is_hard_to_name_a_flag..isn't_it?}`
   
 
 
