@@ -145,7 +145,7 @@ if ($cmd) {
 	}
 }
 ```
-- Đọc lướt qua thì ta sẽ thấy đây là một đoạn code authorize rất bình thường, khi account không phải admin thì sẽ trả về response như đã thấy trên Burp Suite. Nhưng nhìn kĩ lại một chút thì chúng ta phát hiện một sai lầm cực kì tai hại của người viết đoạn code này, đó chính là dùng `if (!$admin->is_admin())` cho câu lệnh `$admin->redirect('/api.php?#access denied');` nhưng lại quên đặt các khối lệnh phía sau vào `else`. Điều này đồng nghĩa rằng kể cả account của bạn không phải là admin, đăng nhập vào bị alert ra lỗi, nhưng vẫn có thể thực thi toàn bộ các lệnh ở phía sau `if`. Vấn đề bây giờ chỉ là chọn value vào để 
+- Đọc lướt qua thì ta sẽ thấy đây là một đoạn code authorize rất bình thường, khi account không phải admin thì sẽ trả về response như đã thấy trên Burp Suite. Nhưng nhìn kĩ lại một chút thì chúng ta phát hiện một sai lầm cực kì tai hại của người viết đoạn code này, đó chính là dùng `if (!$admin->is_admin())` cho câu lệnh `$admin->redirect('/api.php?#access denied');` nhưng lại quên đặt các khối lệnh phía sau vào `else`. Điều này đồng nghĩa rằng kể cả account của bạn không phải là admin, đăng nhập vào bị alert ra lỗi, nhưng vẫn có thể thực thi toàn bộ các lệnh ở phía sau `if`. Vấn đề bây giờ chỉ là chọn value nào để inject vào parameter **c2** trong số 
   
 
 
