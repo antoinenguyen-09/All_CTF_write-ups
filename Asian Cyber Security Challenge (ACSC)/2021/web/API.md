@@ -122,12 +122,30 @@ public function is_pass_correct(){
 
 ![image](https://user-images.githubusercontent.com/61876488/134211842-5dc017ee-08fe-4c6f-8a62-05180c5c84c1.png)
 
-- Response cho biết rằng trang web đang bị chuyển hướng đến **/api.php?#access denied** do đoạn code javascript `location.href = '/api.php?#access denied';`. Vậy đoạn code javascript này từ đâu ra. Check lại hàm **main** rồi mò lại hàm **challenge**, ta có:
+- Response cho biết rằng trang web đang bị chuyển hướng đến **/api.php?#access denied** do đoạn code javascript `location.href = '/api.php?#access denied';`. Vậy đoạn code javascript này từ đâu ra. Check hàm **main** rồi mò lại hàm **challenge**, ta có:
   
 ```php
+$admin = new Admin();
 if (!$admin->is_admin()) $admin->redirect('/api.php?#access denied');
+$cmd = $_REQUEST['c2'];
+if ($cmd) {
+	switch($cmd){
+		case "gu":
+			echo json_encode($admin->export_users());
+			break;
+		case "gd":
+			echo json_encode($admin->export_db($_REQUEST['db']));
+			break;
+		case "gp":
+			echo json_encode($admin->get_pass());
+			break;
+		case "cf":
+			echo json_encode($admin->compare_flag($_REQUEST['flag']));
+			break;
+	}
+}
 ```
-- Nếu o
+- Đọc lướt qua thì ta sẽ thấy đây là một đoạn code authorize rất bình thường, khi account không phải admin thì sẽ trả về response như đã thấy trên Burp Suite. Nhưng nhìn kĩ lại một chút thì chúng ta phát hiện một sai lầm cực kì tai hại của người viết đoạn code này, đó chính là dùng `if (!$admin->is_admin())` cho câu lệnh `$admin->redirect('/api.php?#access denied');` nhưng lại quên đặt các khối lệnh phía sau vào `else`. Điều này đồng nghĩa rằng kể cả account của bạn không phải là admin, đăng nhập vào bị alert ra lỗi, nhưng vẫn có thể thực thi toàn bộ các lệnh ở phía sau `if`. Vấn đề bây giờ chỉ là chọn value vào để 
   
 
 
