@@ -45,13 +45,13 @@ To solve the challenge (or any other image forensics challenges), best use tools
 
 - After import image to `autopsy`, go to **CarvedFiles** then export xlsx files (*the data in 2 files are the same so take 1 file only*).
 
-![image](solve1.png)
+![image](https://user-images.githubusercontent.com/61876488/135738496-768642fb-0980-4fef-952c-ecf795076127.png)
 
 - Identify the original file by checking the fist row data of every files.
 
 - Go to [TextCompare.org](https://www.textcompare.org/excel/), upload the exported file (*carved file*) and the original file and then compare.
 
-![image](solve2.png)
+![image](https://user-images.githubusercontent.com/61876488/135738501-1422c132-29f4-4683-9295-33a6c4af58e5.png)
 
 The answer is: `8d77a554-dc64-478c-b093-da4493a8534d`
 
