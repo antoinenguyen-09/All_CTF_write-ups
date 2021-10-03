@@ -28,7 +28,7 @@ To view the registry, use `Registry Viewer` of **AccessData** or `Registry Explo
 
 Open **SYSTEM** file in the tool (*In my case it's `Registry Viewer`*). Locate to `\SYSTEM\ControlSet001\Control\FVEStats\`
 
-![image](solve1.png)
+![image](https://user-images.githubusercontent.com/61876488/135738458-f9b6a8c3-8c5d-408a-b04c-006260cff279.png)
 
 - **Start time**: **132741897867405652**
 - **End time**: **132741901078561213**
