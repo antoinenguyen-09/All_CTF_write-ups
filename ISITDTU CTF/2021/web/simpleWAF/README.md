@@ -17,7 +17,7 @@
 
 ### 2. Analyze and find the vulnerabilities:
 
-- Đầu tiên, website sẽ lấy ra string từ url parameter `xss` rồi check xem nó đã đc url encode chuẩn chưa (thông qua vòng while). Sau đó nếu như trong string đó có các [HTML entities](https://www.w3schools.com/html/html_entities.asp) thì nó sẽ trở về dạng ban đầu thông qua hàm 
+- Đầu tiên, website sẽ lấy ra string từ url parameter `xss` rồi check xem nó đã đc url encode chuẩn chưa (thông qua vòng while). Sau đó nếu như trong string đó có các [HTML entities](https://www.w3schools.com/html/html_entities.asp) thì nó sẽ trở về dạng HTML tag thông qua hàm `html_entity_decode`. Nói 
 
 ```php
 $xss = $_GET['xss'];
