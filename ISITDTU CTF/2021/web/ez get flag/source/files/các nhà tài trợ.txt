@@ -1,0 +1,11 @@
+200: ĐM ĐỨc
+200: Hoàng
+200: a Minh
+200: a Phúc
+200: Vũ
+Total: 1000
+
+300 = best defender.
+300 = best attacker.
+400 = Quả Bóng vàng.
+
