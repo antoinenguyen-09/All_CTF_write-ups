@@ -21,7 +21,7 @@ Xem qua source của trang [login](https://github.com/antoinenguyen-09/All_CTF_w
 
 Mới nhìn vào có vẻ đây là tính năng nhập một URL bất kì rồi trả về nội dung của URL đó. Hướng đi của challenge này có vẻ là là khai thác [SSRF](https://portswigger.net/web-security/ssrf) rồi. Nhưng trước hết chúng ta sẽ gặp vật cản đầu tiên là hàm `filter` dưới đây:
 
-```php=
+```php
 function filter($url) {
 	$black_lists = ['127.0.0.1', '0.0.0.0'];
 	$url_parse = parse_url($url);
@@ -38,7 +38,7 @@ Tác giả đã lộ rõ ý đồ blacklist 2 ip là `127.0.0.1` và `0.0.0.0`, 
 
 Không những blacklist 2 ip này mà tác giả còn sanitize và validate biến `$url` bằng cách lowercase, regex. Nếu pass qua được hết thì một curl session sẽ được tạo với biến `$url`, kết quả của curl session này sẽ được trả về tại biến `$output` (tham khảo về cách dùng curl tại [đây](https://viblo.asia/p/curl-va-cach-su-dung-trong-php-naQZRAXdKvx)). Còn nếu không pass sẽ kết thúc chương trình và in ra "NO NO NO NO" như hình trên:
 
-```php=
+```php
 $url = strtolower($_POST['url']);
 $check = filter($url);
 if (filter_var($url,FILTER_VALIDATE_URL,FILTER_FLAG_IPV4) && preg_match('/(^https?:\/\/[^:\/]+)/',$url) && $check) {
@@ -63,14 +63,14 @@ else {
 
 Có lẽ có một tính năng "ẩn" ở `home.php` vì một lí do nào đó chúng ta lại không sử dụng được. Từ source ta biết được rằng `home.php` luôn luôn in ra "This is not a private ip" nếu như [client ip address](https://www.geeksforgeeks.org/php-determining-client-ip-address) trong request gửi đến trang này không phải là `127.0.0.1`:
 
-```php=
+```php
 if ($_SERVER['REMOTE_ADDR'] !== "127.0.0.1") {
   die("<center>This is not a private ip</center>");
 }
 ```
 Xem kĩ source thì chúng ta biết được tính năng "ẩn" đó cho phép chúng ta truy vấn thông tin của các user trên web app này thông qua url parameter là `id`:
 
-```php=
+```php
 if (isset($_GET['id'])) {
   $id = $_GET['id'];
   if (!preg_match('/sys|procedure|xml|concat|group|db|where|like|limit|in|0x|extract|by|load|as|binary|
@@ -113,7 +113,7 @@ Chúng ta phát hiện ra không có `union` trong số đó. Vậy thì còn ng
 
 Mục tiêu của việc exploit SQLi theo kiểu UNION attack là in ra toàn bộ data từ table `user`. Nếu như phải test black box thì cần có 1 bước là xác định số cột của `user`, nhưng mà trong source có luôn cả script sql ([main.sql](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/ISITDTU%20CTF/2021/web/last%20point/source/mysql/main.sql)) tạo table này nên không cần phải làm nữa:
 
-```sql=
+```sql
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `username` text NOT NULL,
