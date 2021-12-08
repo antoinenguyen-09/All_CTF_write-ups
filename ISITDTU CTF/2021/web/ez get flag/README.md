@@ -20,7 +20,7 @@ Check source của bài này thì chỉ có 2 trang `register` và `login` này 
 
 Ta có source của chức năng login như sau:
 
-```python=
+```python
 def login():
 	if 'username' in session:
 		return redirect(url_for('home'))
@@ -59,7 +59,7 @@ Từ source ta có thể tóm tắt các thức hoạt động của trang `logi
 
 Điều kiện để có thể login như một `admin` đó là `sql.login_check(username,password) > 0` và `username == 'admin'`. Check hàm `login_check` xem sao:
 
-```python=
+```python
 def login_check(username, password):
 
 	conn = sqlite3.connect('database/users.db')
@@ -77,7 +77,7 @@ Cột password trong table `users` đã bị hash. Mà kể cả chúng ta có c
 
 Quay sang tìm cách để trở thành `guest`. Điều kiện để có thể login như một `guest` đó là `captcha.check_captcha(cc) == True`. Mặc kệ các field còn lại là `username`, `password`, `secret (option)` có như thế nào, chỉ cần nhập đúng captcha vào field `Captcha` là vào được trang `home`. Check hàm `check_captcha` xem sao:
 
-```python=
+```python
 SECRET = '[CENSORED]' # this is captcha
 CHECK = '203c0617e3bde7ec99b5b657417a75131e3629b8ffdfdbbbbfd02332'
 
@@ -116,7 +116,7 @@ Từ vòng lặp `for m in msg:` thứ nhất ta có `c[0] = a₀ ^ m₀ ⟺ c[0
 
 Tìm được a và b thì coi như bài toán đã kết thúc, chúng ta chỉ chạy một vòng lặp tương tự của hàm `calculate`, nhưng thay vì cho a đi xor với từng bytes của msg thì ta xor thẳng với `CHECK`:
 
-```python=
+```python
 def gen_captcha():
 	SECRET = '[CENSORED]' # this is captcha
 	CHECK = '203c0617e3bde7ec99b5b657417a75131e3629b8ffdfdbbbbfd02332'
@@ -143,7 +143,7 @@ Chạy script ta có `SECRET = ISITDTU_CTF_S3cret_!!!`, nhập captcha này vào
 
 Để ý vào dòng "Your secret: ..." ở chức năng `home`. Nó sẽ trả về những gì chúng ta nhập vào tại field `Secret (option)` thông qua template engine của web app là [Jinja](https://jinja.palletsprojects.com/en/3.0.x/). Liệu nó có bị dính SSTI hay không? Câu trả lời là không vì chức năng này đang sử dụng hàm [render_template](https://www.fullstackpython.com/flask-templating-render-template-examples.html) để đẩy **dynamic content** từ biến `secret` vào một **static template file** là `home.html`.
 
-```python=
+```python
 # home function
 @app.route('/home')
 def home():
@@ -166,7 +166,7 @@ def home():
 
 Tuy vậy, trong quá trình research các hàm dùng để render content của web app này thì mình phát hiện trong source có một đoạn tác giả không sử dụng hàm render_template, thay vào đó là render_template_string (xem sự khác nhau giữa 2 hàm render này tại [đây](https://www.programmerall.com/article/2281890402/)), nằm ở chức năng `rate`:
 
-```python=
+```python
 if session['username'] == 'admin' and session['check'] == 1:
 	picture = picture.replace('{{','{').replace('}}','}').replace('>','').replace('#','').replace('<','')
 	if waf.isValid(picture):
@@ -189,13 +189,13 @@ Chức năng `rate` ở 2 role `admin` và `guest` đều hoạt động giống
 
 Vấn đề là chúng ta phải bypass được cái black list `_waf`của guest:
 
-```python=
+```python
 _waf = ['{{','+','~','"','_','|','\\','[',']','#','>','<','!','config','==','}}']
 ```
 
 Trước mắt chúng ta thấy "{{...}}", vốn dùng để biểu diễn một [expression](https://jinja.palletsprojects.com/en/3.0.x/templates/#expressions) trong Jinja đã bị blacklist. Nhưng chúng ta vẫn có thể dùng "{%...%}" - [control statement](https://jinja.palletsprojects.com/en/3.0.x/templates/#list-of-control-structures) để làm vài trò hay ho, trong đó có [gán giá trị cho các template variable](https://jinja.palletsprojects.com/en/3.0.x/templates/#assignments). Thông thường thì các template variable của jinja ở phía front end sẽ độc lập hoàn toàn với các variable **cùng tên** của python ở phía back end, khi có 2 điều kiện được thỏa mãn là variable cùng tên đó của Python **không được truyền** vào template variable của Jinja thông qua các **hàm render** và trong **control statement** của Jinja **không có một variable cùng tên** được khai báo. Lấy 2 đoạn code kèm output tương ứng của nó như sau làm ví dụ:
 
-```python=
+```python
 # case 1
 from flask import Flask, render_template_string
 app = Flask(__name__)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 ```
 ![](https://i.imgur.com/xLr6dnD.png)
 
-```python=
+```python
 # case 2
 from flask import Flask, render_template_string
 app = Flask(__name__)
@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
 Trường hợp tương tự cũng xảy ra với các instance được tạo từ các subclass của module Flask như [session](https://flask.palletsprojects.com/en/2.0.x/quickstart/#sessions).
 
-```python=
+```python
 # session saved in server side.
 from flask import Flask, render_template_string, session
 app = Flask(__name__)
@@ -265,7 +265,7 @@ Submit rồi refresh lại trang, chúng ta sẽ thấy dòng này thay vì "you
 
 Như vậy công việc cuối cùng của chúng ta là tìm cách đọc được file `flag`. Tuy nhiên, lại xuất hiện thêm một khó khăn nữa, đó là những gì xuất hiện trên response sẽ được Flask trả về dựa trên kết quả của câu lệnh `return`. Mà thứ chúng ta cần là `render_template_string(picture)` thì nó lại không được `return`. Do đó chúng ta không thể một phát đọc luôn nội dung của flag.
 
-```python=
+```python
 if waf.isValid(picture):
 	render_template_string(picture)  # this won't never be appear in response :(
 return 'you are admin you can choose all :)' # this will always appear in response!
@@ -283,7 +283,7 @@ Trong high-level API có một class rất đặc biệt là `jinja2.Undefined`:
 
 Ví dụ về một instance của class `jinja2.Undefined`:
 
-```python=
+```python
 from jinja2 import Template
 
 msg = Template("{{ module.type(t) }}").render(module=__builtins__)  # variable "t" in template wasn't initialize and Jinja engine is unable to look up íts name, so Jinja treat it as undefined class.
@@ -302,7 +302,7 @@ Bạn có thể đọc doc để hiểu rõ hơn về [`__builtins__`](https://d
 
 Nhưng vì cảm thấy game vẫn chưa đủ khó, tác giả đã blacklist luôn cả 2 `__globals__` và `__builtins__` :D
 
-```python=
+```python
 BLACK_LIST = [
  'class', 'mro', 'base', 'request', 'app',
  'sleep', 'add', '+', 'config', 'subclasses', 'format', 'dict', 'get', 'attr', 'globals', 'time', 'read',
@@ -312,7 +312,7 @@ BLACK_LIST = [
 
 Nếu đọc cái `BLACK_LIST` này xong mà ta vẫn đâm đầu vào cheat sheat để kiếm một payload mới thì chắc là "No Hope!". Mình chợt nhớ ra trong Jinja có một "magic" cho phép thay đổi các template variable là [Filters](https://jinja.palletsprojects.com/en/3.0.x/templates/#filters), và trong số các "Filter" có [reverse](https://jinja.palletsprojects.com/en/3.0.x/templates/#jinja-filters.reverse) cho phép đảo ngược mọi thứ!
 
-```python=
+```python
 from flask import Flask, render_template_string
 app = Flask(__name__)
 
@@ -335,7 +335,7 @@ Do đó trong payload chúng ta chỉ cần tạo 2 template variable như này 
 
 Nói qua một chút về ý tưởng sử dụng `{{p(' s if str([i for i in open("/flag")])[s]=="char" else a',{'s':"index"|length})}}`. `p` đã được gán bằng method `eval`. Expression bên trong eval là:
 
-```python=
+```python
 s if str([i for i in open("/flag")])[s]=="char" else a
 ```
 
@@ -343,7 +343,7 @@ Expression trên dịch nôm na ra theo tiếng Hooman là như này: mở file 
 
 Nếu bạn nghĩ đến đây là có thể build script rồi lấy flag ngon ăn thì nhầm rồi! Payload `{{p(' s if str([i for i in open("/flag")])[s]=="char" else a',{'s':"index"|length})}}` vẫn là chưa hợp lệ, vì trước khi được nạp vào hàm `render_template_string` nó sẽ bị sửa thành `{p(' s if str([i for i in open("/flag")])[s]=="char" else a',{'s':"index"|length})}`, do đó không còn là Jinja Expression và sẽ không chạy được:
 
-```python=
+```python
 if session['username'] == 'admin' and session['check'] == 1:
 
 	picture = picture.replace('{{','{').replace('}}','}').replace('>','').replace('#','').replace('<','')
@@ -358,7 +358,7 @@ Các bạn có thể đọc exploit code của mình tại [đây](https://githu
 
 Mặc dù vậy khi chạy exploit code chúng ta chỉ mới một nửa flag. Lí do nó spam các kí tự "a" ở cuối mà ko chịu in tiếp flag là vì theo exploit code thì string "index" sẽ được replace bằng một chuỗi "xxxx..." tăng dần, đồng nghĩa với độ dài payload sẽ liên tục tăng. Mà hàm isValid trong [waf.py](https://github.com/antoinenguyen-09/All_CTF_write-ups/blob/master/ISITDTU%20CTF/2021/web/ez%20get%20flag/source/files/lib/waf.py) chỉ cho phép payload dưới 202 kí tự:
 
-```python=
+```python
 if countChar(picture) and len(picture) <= 202:
 	...
 ```
